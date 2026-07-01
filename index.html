@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hansip — Analisis Risiko Komunitas</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f4f0;min-height:100vh}
+
+/* ─── Header ─────────────────────────────── */
+header{background:#1c1c1c;color:#fff;padding:12px 0;position:sticky;top:0;z-index:100;border-bottom:1px solid #333}
+.header-inner{max-width:900px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:10px}
+.hlogo{width:30px;height:30px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hlogo svg{width:18px;height:18px}
+.htitle{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.hsub{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+.hright{margin-left:auto;display:flex;align-items:center;gap:8px}
+.save-dot{width:6px;height:6px;border-radius:50%;background:#555;transition:background .3s;flex-shrink:0}
+.save-dot.saved{background:#4ade80}
+.save-lbl{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap}
+.hbtn-group{display:flex;gap:6px}
+
+/* ─── Layout ──────────────────────────────── */
+.container{max-width:900px;margin:0 auto;padding:16px 16px 90px}
+.card{background:#fff;border:1px solid #e8e7e2;border-radius:10px;padding:18px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+
+/* ─── Buttons ─────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;border-radius:7px;font-family:inherit;transition:opacity .15s;line-height:1;white-space:nowrap}
+.btn:active{opacity:.7}
+.btn-light{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18)}
+.btn-outline{background:#fff;color:#444;border:1px solid #d4d3cd}
+.btn-reset{background:#fff5f5;color:#991b1b;border:1px solid #fca5a5;font-size:11px;padding:5px 10px}
+.btn-full{width:100%;justify-content:center;padding:10px 12px;font-size:13px}
+
+/* ─── Form ────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em}
+input[type=text],input[type=date],textarea{padding:8px 10px;border:1px solid #d4d3cd;border-radius:6px;font-size:13px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none;transition:border-color .15s;width:100%}
+input[type=text]:focus,input[type=date]:focus,textarea:focus{border-color:#888}
+textarea{resize:vertical;min-height:56px}
+
+/* ─── Scenario tabs ───────────────────────── */
+.scen-tabs{display:flex;border-radius:8px;overflow:hidden;border:1px solid #d4d3cd}
+.stab{flex:1;padding:9px 4px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;background:#fff;color:#777;border:none;font-family:inherit;transition:background .15s;line-height:1.3;min-height:44px}
+.stab:not(:last-child){border-right:1px solid #d4d3cd}
+.stab[data-s="0"].active{background:#2563EB;color:#fff}
+.stab[data-s="1"].active{background:#DC2626;color:#fff}
+.stab[data-s="2"].active{background:#D97706;color:#fff}
+.scen-bar{margin-top:10px;padding:10px 12px;border-radius:6px;background:#f9f8f5;border-left:3px solid #ccc;font-size:13px;line-height:1.65;color:#333}
+
+/* ─── Category tabs ───────────────────────── */
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ctab{padding:6px 11px;font-size:12px;cursor:pointer;border:1px solid #d4d3cd;border-radius:6px;background:#fff;color:#666;font-family:inherit;display:flex;align-items:center;gap:5px;transition:background .1s;white-space:nowrap;min-height:36px}
+.ctab.active{background:#1c1c1c;color:#fff;border-color:#1c1c1c}
+
+/* ─── Risk badges ─────────────────────────── */
+.rb{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;min-width:56px;text-align:center}
+.rR{background:#dcfce7;color:#15803d}
+.rS{background:#fef3c7;color:#b45309}
+.rT{background:#fee2e2;color:#b91c1c}
+
+/* ─── Category header ─────────────────────── */
+.cat-header{background:#f9f8f5;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.cat-kpi{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.kpi-block{display:flex;flex-direction:column;gap:1px}
+.kpi-lbl{font-size:10px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.kpi-val{font-size:20px;font-weight:700;line-height:1.1}
+.kpi-sm{font-size:15px}
+.cat-compare{display:flex;border:1px solid #e8e7e2;border-radius:6px;overflow:hidden;margin-top:8px}
+.cc-cell{flex:1;padding:6px 8px;text-align:center;border-right:1px solid #e8e7e2}
+.cc-cell:last-child{border-right:none}
+.cc-lbl{font-size:10px;color:#999;margin-bottom:3px}
+.cc-val{font-size:12px;font-weight:600}
+
+/* ─── Segmented control ───────────────────── */
+.seg{display:inline-flex}
+.seg button{padding:4px 10px;font-size:13px;cursor:pointer;border:1px solid #d4d3cd;background:#fff;color:#777;font-family:inherit;transition:background .1s;min-height:36px}
+.seg button.on{background:#1c1c1c;color:#fff;border-color:#1c1c1c}
+.seg button:first-child{border-radius:5px 0 0 5px}
+.seg button:last-child{border-radius:0 5px 5px 0}
+.seg button:not(:first-child){border-left:none}
+
+/* ─── Desktop threat table ────────────────── */
+.ttable{width:100%;border-collapse:collapse}
+.ttable th{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px;border-bottom:1px solid #e8e7e2;text-align:left}
+.ttable td{padding:8px 8px;border-bottom:1px solid #f5f4f0;vertical-align:middle}
+.ttable tr:last-child td{border-bottom:none}
+.ttable .num{color:#bbb;font-size:11px;text-align:center;width:20px}
+.ttable .score{text-align:center;font-weight:700;font-size:14px}
+
+/* ─── Mobile threat cards ─────────────────── */
+.threat-cards{display:none;flex-direction:column;gap:8px}
+.tcard{background:#f9f8f5;border:1px solid #e8e7e2;border-radius:8px;padding:12px}
+.tcard-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
+.tcard-num{font-size:11px;color:#bbb;font-weight:600;min-width:16px;padding-top:1px}
+.tcard-name{font-size:13px;font-weight:500;flex:1;line-height:1.4}
+.tcard-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tcard-ctrl{display:flex;align-items:center;gap:6px}
+.tcard-lbl{font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.03em;min-width:72px}
+.tcard-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid #e8e7e2}
+.tcard-score{font-size:12px;color:#888}
+.tcard-score strong{font-size:16px;color:#1a1a1a;font-weight:700}
+
+/* Mobile seg — bigger touch targets */
+.seg-lg button{padding:8px 14px;font-size:14px;min-height:44px}
+
+/* ─── Summary ─────────────────────────────── */
+.stable{width:100%;border-collapse:collapse;margin-bottom:20px}
+.stable th{font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;border-bottom:1px solid #e8e7e2;text-align:left}
+.stable td{padding:10px 10px;border-bottom:1px solid #f5f4f0;font-size:13px}
+.stable tr:last-child td{border-bottom:none}
+.stable td:nth-child(n+2){text-align:center}
+.radar-wrap{display:flex;justify-content:center;padding:8px 0}
+
+/* ─── Footer ──────────────────────────────── */
+footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e7e2;padding:10px 16px;z-index:99}
+.footer-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:8px}
+.footer-left{display:flex;align-items:center;gap:6px;font-size:11px;color:#bbb}
+.footer-right{margin-left:auto;display:flex;gap:6px}
+#file-input{display:none}
+
+/* ─── Print ───────────────────────────────── */
+@media print{
+  header,footer,.cat-tabs,.stab,.btn,.seg button,.ctab,.btn-reset{display:none!important}
+  .threat-cards{display:flex!important}
+  .threat-table-wrap{display:none!important}
+  .card{border:1px solid #ccc;break-inside:avoid;margin-bottom:8px;box-shadow:none}
+  body{background:#fff;font-size:11px}
+  .container{padding-bottom:0}
+  .tcard{break-inside:avoid}
+}
+
+/* ─── Responsive ──────────────────────────── */
+@media(max-width:640px){
+  .form-grid{grid-template-columns:1fr}
+  .hbtn-group{display:none}
+  .save-lbl{display:none}
+  .threat-table-wrap{display:none}
+  .threat-cards{display:flex}
+  .htitle{font-size:14px}
+  .hsub{display:none}
+  .footer-inner{flex-wrap:wrap;gap:6px}
+  .footer-left{width:100%;order:2;justify-content:center}
+  .footer-right{width:100%;order:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .footer-right .btn{justify-content:center}
+  .cat-header{padding:10px 10px}
+  .cat-kpi{gap:10px}
+  .kpi-val{font-size:17px}
+  .card{padding:14px}
+}
+@media(min-width:641px){
+  .mobile-actions{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="hlogo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1c1c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="htitle">Hansip</div>
+      <div class="hsub">Analisis Risiko Komunitas</div>
+    </div>
+    <div class="hright">
+      <div class="save-dot" id="save-dot"></div>
+      <span class="save-lbl" id="save-lbl">Belum disimpan</span>
+      <div class="hbtn-group">
+        <button class="btn btn-light" onclick="exportJSON()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Simpan JSON
+        </button>
+        <button class="btn btn-light" onclick="document.getElementById('file-input').click()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Muat JSON
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Mobile: action buttons (only shown on mobile via CSS) -->
+  <div class="mobile-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <button class="btn btn-outline btn-full" onclick="exportJSON()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Simpan JSON
+    </button>
+    <button class="btn btn-outline btn-full" onclick="document.getElementById('file-input').click()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Muat JSON
+    </button>
+  </div>
+  <input type="file" id="file-input" accept=".json" onchange="importJSON(event)">
+
+  <!-- Identitas -->
+  <div class="card">
+    <div class="card-title">Identitas Pengisi</div>
+    <div class="form-grid">
+      <div class="fg"><label>Nama Lengkap</label><input type="text" id="f-nama" placeholder="Nama pengisi penilaian" oninput="saveMeta()"></div>
+      <div class="fg"><label>Organisasi / Komunitas</label><input type="text" id="f-org" placeholder="Nama organisasi" oninput="saveMeta()"></div>
+      <div class="fg"><label>Tanggal Penilaian</label><input type="date" id="f-tgl" oninput="saveMeta()"></div>
+      <div class="fg"><label>Kontak / Email</label><input type="text" id="f-kontak" placeholder="kontak@email.com" oninput="saveMeta()"></div>
+      <div class="fg form-full"><label>Catatan Konteks</label><textarea id="f-catatan" placeholder="Deskripsi singkat konteks kegiatan, wilayah, atau kondisi khusus yang relevan..." oninput="saveMeta()"></textarea></div>
+    </div>
+  </div>
+
+  <!-- Skenario -->
+  <div class="card">
+    <div class="card-title">Skenario Kegiatan</div>
+    <div class="scen-tabs">
+      <button class="stab active" data-s="0" onclick="setScen(0)">Pra Aksi</button>
+      <button class="stab" data-s="1" onclick="setScen(1)">Aksi Massa</button>
+      <button class="stab" data-s="2" onclick="setScen(2)">Paska-Aksi</button>
+    </div>
+    <div class="scen-bar" id="scen-bar"></div>
+  </div>
+
+  <!-- Assessment -->
+  <div class="card">
+    <div class="cat-tabs" id="cat-tabs"></div>
+    <div id="cat-content"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="footer-time">—</span>
+    </div>
+    <div class="footer-right">
+      <button class="btn btn-outline" onclick="printPage()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Cetak / PDF
+      </button>
+      <button class="btn btn-outline" onclick="clearAll()">Reset Semua</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+
+const SCEN_DATA = [
+  { label:"Pra Aksi", color:"#2563EB",
+    desc:"Rapat persiapan, konsolidasi, titik temu, webinar, diskusi publik, sikap bersama.",
+    context:"Risiko fisik <b>relatif rendah</b> — kegiatan lebih tertutup. Ancaman utama ada di <b>keamanan digital</b> (koordinasi via pesan rentan intersepsi) dan <b>psikis</b> (tekanan membangun konsensus)." },
+  { label:"Aksi Massa", color:"#DC2626",
+    desc:"Perizinan, panggilan publik, titik kumpul, mobilisasi jaringan, peta evakuasi.",
+    context:"Risiko <b>tertinggi secara keseluruhan</b>. Kekerasan fisik dan jerat hukum sangat mungkin terjadi. <b>K3 meningkat tajam</b> akibat kerumunan dan potensi gas/proyektil." },
+  { label:"Paska-Aksi", color:"#D97706",
+    desc:"Rapat lanjutan, kampanye digital, peliputan investigasi, pernyataan sikap bersama.",
+    context:"Risiko fisik menurun, tapi <b>hukum & digital meningkat</b> — penyelidikan dan doxxing sering menyusul aksi. Risiko <b>psikis mencapai puncaknya</b> (trauma, PTSD, depresi)." }
+];
+
+const CATS = [
+  { id:"kf", label:"Kekerasan Fisik", short:"Fisik",
+    threats:["Penangkapan Paksa","Penyanderaan / Penyekapan","Penculikan","Percobaan Pembunuhan","Penganiayaan","Pengeroyokan","Penyerangan OTK","Pemerasan","Pengawasan Melekat","Penyitaan Aset Secara Paksa"] },
+  { id:"k3", label:"Keselamatan K3", short:"K3",
+    threats:["Bahaya Fisik (kebisingan, suhu ekstrem)","Bahaya Kimiawi (gas, uap beracun)","Bahaya Biologis (bakteri, virus)","Bahaya Ergonomis (postur, beban)","Bahaya Psikososial (stres, bullying)","Bahaya Mekanis","Bahaya Elektrikal","Bahaya Jatuh","Bahaya Akibat Tekanan","Bahan Peledak / Mudah Terbakar"] },
+  { id:"dg", label:"Keamanan Digital", short:"Digital",
+    threats:["Phishing","Malware","Serangan DDoS","Ransomware","Serangan Man-in-the-Middle","Pencurian Identitas & Kebocoran Data","Social Engineering","Advanced Persistent Threats (APT)","SQL Injection","Insider Threats"] },
+  { id:"hk", label:"Jerat Hukum", short:"Hukum",
+    threats:["Pencemaran Nama Baik & Fitnah","Pasal Penghasutan (Ps. 160 KUHP)","UU Kedaruratan (senjata tajam)","Pengerusakan Fasilitas Umum","Penyebaran Berita Bohong (UU ITE)","Penghalangan Penyidikan","Membahayakan Lalu Lintas","Intersepsi Informasi Elektronik","Pelecehan / Kekerasan Seksual","Unjuk Rasa Tanpa Pemberitahuan"] },
+  { id:"ps", label:"Psikis", short:"Psikis",
+    threats:["Gangguan Makan","Gangguan Kecemasan","Gangguan Emosi","Gangguan Tidur","Gangguan Psikotik","OCD","Gangguan Bipolar","Depresi","Skizofrenia","PTSD"] }
+];
+
+const DEFAULTS = [
+  [[[1,3],[1,2],[1,2],[1,3],[1,3],[1,3],[2,3],[1,3],[2,3],[1,3]],[[1,2],[1,3],[2,3],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],[[3,3],[2,3],[1,3],[1,3],[2,3],[2,3],[2,3],[2,2],[1,2],[2,3]],[[1,3],[1,3],[1,3],[1,3],[2,2],[1,2],[1,3],[1,1],[1,1],[1,2]],[[1,2],[2,3],[1,2],[2,3],[1,1],[1,1],[1,1],[1,2],[1,1],[1,2]]],
+  [[[3,3],[2,2],[2,2],[3,3],[3,3],[3,3],[2,3],[2,3],[2,3],[2,3]],[[1,2],[2,3],[3,3],[3,2],[2,2],[2,2],[2,2],[3,2],[2,2],[2,2]],[[3,3],[3,3],[2,3],[3,3],[2,3],[3,3],[2,3],[1,2],[2,2],[2,3]],[[2,3],[3,3],[3,3],[3,3],[2,2],[2,2],[3,3],[1,1],[1,1],[2,2]],[[1,2],[2,3],[1,2],[3,3],[1,1],[1,1],[1,1],[2,2],[1,1],[3,2]]],
+  [[[2,3],[1,2],[1,2],[1,3],[2,3],[2,3],[2,3],[2,3],[3,3],[2,3]],[[1,2],[1,3],[2,3],[2,2],[2,2],[1,2],[1,2],[1,2],[1,2],[1,2]],[[3,3],[3,3],[1,3],[2,3],[2,3],[3,3],[3,3],[2,2],[2,2],[3,3]],[[3,3],[3,3],[2,3],[2,3],[2,2],[3,2],[2,3],[1,1],[2,1],[2,2]],[[1,2],[3,3],[2,2],[3,3],[1,1],[1,1],[2,1],[3,2],[1,1],[3,2]]]
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+
+let state = {
+  meta: {nama:'',org:'',tgl:'',kontak:'',catatan:''},
+  curScen: 0, curCat: 0,
+  scores: DEFAULTS.map(s => s.map(c => c.map(([p,i]) => ({p,i}))))
+};
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+
+const isMobile = () => window.innerWidth <= 640;
+function rL(p,i){if(p===3&&i===3)return'T';if(p===1||(p===2&&i===1))return'R';return'S'}
+function rLbl(r){return r==='T'?'TINGGI':r==='S'?'SEDANG':'RENDAH'}
+function catAvg(si,ci){return state.scores[si][ci].reduce((a,t)=>a+t.p*t.i,0)/10}
+function catLvl(avg){return avg>6?'T':avg>=4?'S':'R'}
+
+// ─── SAVE ──────────────────────────────────────────────────────────────────
+
+let saveTimer = null;
+function scheduleSave(){
+  const dot=document.getElementById('save-dot');
+  const lbl=document.getElementById('save-lbl');
+  if(dot)dot.classList.remove('saved');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem('hansip_v2',JSON.stringify(state));
+      if(dot)dot.classList.add('saved');
+      const t=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      if(lbl)lbl.textContent='Tersimpan '+t;
+      const ft=document.getElementById('footer-time');
+      if(ft)ft.textContent='Tersimpan otomatis '+t;
+    }catch(e){if(lbl)lbl.textContent='Gagal menyimpan'}
+  },600);
+}
+
+function loadFromStorage(){
+  try{
+    const raw=localStorage.getItem('hansip_v2');
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    if(saved.scores)state.scores=saved.scores;
+    if(saved.meta)state.meta=saved.meta;
+    if(saved.curScen!==undefined)state.curScen=saved.curScen;
+    state.curCat=0;
+    applyMeta();
+  }catch(e){}
+}
+
+function applyMeta(){
+  document.getElementById('f-nama').value=state.meta.nama||'';
+  document.getElementById('f-org').value=state.meta.org||'';
+  document.getElementById('f-tgl').value=state.meta.tgl||'';
+  document.getElementById('f-kontak').value=state.meta.kontak||'';
+  document.getElementById('f-catatan').value=state.meta.catatan||'';
+}
+
+function saveMeta(){
+  state.meta.nama=document.getElementById('f-nama').value;
+  state.meta.org=document.getElementById('f-org').value;
+  state.meta.tgl=document.getElementById('f-tgl').value;
+  state.meta.kontak=document.getElementById('f-kontak').value;
+  state.meta.catatan=document.getElementById('f-catatan').value;
+  scheduleSave();
+}
+
+// ─── JSON ──────────────────────────────────────────────────────────────────
+
+function exportJSON(){
+  const fn='hansip-'+(state.meta.org||'risiko')+'-'+(state.meta.tgl||new Date().toISOString().slice(0,10))+'.json';
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+}
+
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    try{
+      const loaded=JSON.parse(evt.target.result);
+      if(!loaded.scores){alert('File tidak valid.');return}
+      state=loaded;state.curCat=0;
+      applyMeta();setScen(state.curScen,true);renderAll();scheduleSave();
+      alert('Data berhasil dimuat.');
+    }catch(err){alert('Gagal membaca file: '+err.message)}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function clearAll(){
+  if(!confirm('Reset semua data?'))return;
+  localStorage.removeItem('hansip_v2');
+  state={meta:{nama:'',org:'',tgl:'',kontak:'',catatan:''},curScen:0,curCat:0,
+    scores:DEFAULTS.map(s=>s.map(c=>c.map(([p,i])=>({p,i}))))};
+  applyMeta();setScen(0,true);renderAll();
+  document.getElementById('save-dot').classList.remove('saved');
+  document.getElementById('save-lbl').textContent='Belum disimpan';
+  document.getElementById('footer-time').textContent='—';
+}
+
+function printPage(){window.print()}
+
+// ─── SCENARIO ──────────────────────────────────────────────────────────────
+
+function setScen(si,silent){
+  state.curScen=si;
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  const btn=document.querySelector(`.stab[data-s="${si}"]`);
+  if(btn)btn.classList.add('active');
+  const sc=SCEN_DATA[si];
+  const bar=document.getElementById('scen-bar');
+  if(bar){
+    bar.innerHTML=`<span style="color:${sc.color};font-weight:700">${sc.label}</span> — ${sc.desc}<br><span style="font-size:12px;color:#555">${sc.context}</span>`;
+    bar.style.borderLeftColor=sc.color;
+  }
+  if(!silent){scheduleSave();renderAll()}
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+
+function setVal(ci,ti,key,val){
+  state.scores[state.curScen][ci][ti][key]=val;
+  scheduleSave();renderAll();
+}
+
+function resetScen(){
+  if(!confirm(`Reset nilai skenario "${SCEN_DATA[state.curScen].label}"?`))return;
+  state.scores[state.curScen]=DEFAULTS[state.curScen].map(c=>c.map(([p,i])=>({p,i})));
+  scheduleSave();renderAll();
+}
+
+function renderCatTabs(){
+  document.getElementById('cat-tabs').innerHTML=
+    CATS.map((c,i)=>{
+      const avg=catAvg(state.curScen,i),rl=catLvl(avg);
+      return`<button class="ctab${i===state.curCat?' active':''}" onclick="switchCat(${i})">${c.label} <span class="rb r${rl}" style="font-size:10px;padding:1px 5px">${avg.toFixed(1)}</span></button>`;
+    }).join('')+
+    `<button class="ctab${state.curCat===5?' active':''}" onclick="switchCat(5)">Ringkasan</button>`;
+}
+
+function switchCat(i){state.curCat=i;renderAll()}
+
+function makeSeg(ci,ti,key,val,mobile){
+  const cur=state.scores[state.curScen][ci][ti][key];
+  const cls='seg'+(mobile?' seg-lg':'');
+  return`<div class="${cls}">${[1,2,3].map(v=>`<button class="${v===cur?'on':''}" onclick="setVal(${ci},${ti},'${key}',${v})">${v}</button>`).join('')}</div>`;
+}
+
+function renderCat(ci){
+  const si=state.curScen;
+  const sc=SCEN_DATA[si];
+  const avg=catAvg(si,ci);
+  const avgP=(state.scores[si][ci].reduce((a,t)=>a+t.p,0)/10).toFixed(1);
+  const avgI=(state.scores[si][ci].reduce((a,t)=>a+t.i,0)/10).toFixed(1);
+  const catRl=catLvl(avg);
+
+  const compareCells=SCEN_DATA.map((s,idx)=>{
+    const a=catAvg(idx,ci),r=catLvl(a);
+    return`<div class="cc-cell" style="${idx===si?'background:#f0f0eb;':''}" >
+      <div class="cc-lbl" style="color:${s.color}">${s.label}</div>
+      <div class="cc-val">${a.toFixed(1)} <span class="rb r${r}" style="font-size:10px;padding:1px 4px">${rLbl(r)}</span></div>
+    </div>`;
+  }).join('');
+
+  // Desktop table rows
+  const deskRows=CATS[ci].threats.map((tn,ti)=>{
+    const s=state.scores[si][ci][ti],score=s.p*s.i,rl=rL(s.p,s.i);
+    return`<tr>
+      <td class="num">${ti+1}</td>
+      <td>${tn}</td>
+      <td>${makeSeg(ci,ti,'p',s.p,false)}</td>
+      <td>${makeSeg(ci,ti,'i',s.i,false)}</td>
+      <td class="score">${score}</td>
+      <td><span class="rb r${rl}">${rLbl(rl)}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Mobile cards
+  const mobCards=CATS[ci].threats.map((tn,ti)=>{
+    const s=state.scores[si][ci][ti],score=s.p*s.i,rl=rL(s.p,s.i);
+    return`<div class="tcard">
+      <div class="tcard-header">
+        <span class="tcard-num">${ti+1}</span>
+        <span class="tcard-name">${tn}</span>
+      </div>
+      <div class="tcard-controls">
+        <div class="tcard-ctrl"><span class="tcard-lbl">Probabilitas</span>${makeSeg(ci,ti,'p',s.p,true)}</div>
+        <div class="tcard-ctrl"><span class="tcard-lbl">Dampak</span>${makeSeg(ci,ti,'i',s.i,true)}</div>
+      </div>
+      <div class="tcard-footer">
+        <span class="tcard-score">Skor: <strong>${score}</strong></span>
+        <span class="rb r${rl}">${rLbl(rl)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return`<div class="cat-header">
+    <div class="cat-kpi">
+      <div style="width:3px;height:44px;background:${sc.color};border-radius:2px;flex-shrink:0"></div>
+      <div class="kpi-block">
+        <div class="kpi-lbl">Skor rata-rata · ${sc.label}</div>
+        <div class="kpi-val">${avg.toFixed(2)} <span class="rb r${catRl}" style="font-size:12px;padding:3px 9px;margin-left:4px">${rLbl(catRl)}</span></div>
+      </div>
+      <div class="kpi-block" style="margin-left:auto">
+        <div class="kpi-lbl">Avg Prob</div>
+        <div class="kpi-val kpi-sm">${avgP}</div>
+      </div>
+      <div class="kpi-block">
+        <div class="kpi-lbl">Avg Dampak</div>
+        <div class="kpi-val kpi-sm">${avgI}</div>
+      </div>
+      <button class="btn btn-reset" onclick="resetScen()">Reset skenario</button>
+    </div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Perbandingan skenario</div>
+    <div class="cat-compare">${compareCells}</div>
+  </div>
+  <div class="threat-table-wrap" style="overflow-x:auto">
+    <table class="ttable">
+      <thead><tr><th>#</th><th>Potensi Ancaman</th><th>Probabilitas (1–3)</th><th>Dampak (1–3)</th><th>Skor</th><th>Level</th></tr></thead>
+      <tbody>${deskRows}</tbody>
+    </table>
+  </div>
+  <div class="threat-cards">${mobCards}</div>
+  <p style="font-size:11px;color:#bbb;margin-top:10px">Prob: 1 Tidak Mungkin · 2 Mungkin · 3 Sangat Mungkin &nbsp;|&nbsp; Dampak: 1 Rendah · 2 Sedang · 3 Tinggi</p>`;
+}
+
+function renderSummary(){
+  const rows=CATS.map((c,ci)=>{
+    const cells=SCEN_DATA.map((_,si)=>{
+      const a=catAvg(si,ci),r=catLvl(a);
+      return`<td style="${si===state.curScen?'font-weight:700':''}"><span class="rb r${r}">${a.toFixed(2)}</span></td>`;
+    }).join('');
+    return`<tr><td><b>${c.label}</b></td>${cells}</tr>`;
+  }).join('');
+  const heads=SCEN_DATA.map((s,si)=>`<th style="color:${s.color}">${s.label}${si===state.curScen?' ★':''}</th>`).join('');
+  return`<table class="stable">
+    <thead><tr><th>Aspek Penilaian</th>${heads}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div style="font-size:12px;color:#999;margin-bottom:6px">Profil risiko per skenario (★ = skenario aktif):</div>
+  <div class="radar-wrap" id="radar-wrap"></div>
+  <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap">
+    ${SCEN_DATA.map((s,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555">
+      <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${s.color}" stroke-width="2.5" stroke-dasharray="${i===0?'':i===1?'6,3':'2,3'}"/><circle cx="11" cy="4" r="3" fill="${s.color}"/></svg>
+      ${s.label}
+    </div>`).join('')}
+  </div>`;
+}
+
+function drawRadar(){
+  const wrap=document.getElementById('radar-wrap');if(!wrap)return;
+  const mobile=window.innerWidth<640;
+  const W=mobile?320:480,H=mobile?280:380;
+  const cx=W/2,cy=H/2-(mobile?5:10),R=mobile?90:130;
+  const maxVal=9,n=5;
+  const angles=Array.from({length:n},(_,i)=>-Math.PI/2+(2*Math.PI*i)/n);
+  function toXY(a,v){const r=(v/maxVal)*R;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto">`;
+  [3,6,9].forEach(v=>{
+    const pts=angles.map(a=>toXY(a,v).map(x=>x.toFixed(1)).join(',')).join(' ');
+    svg+=`<polygon points="${pts}" fill="none" stroke="#e8e7e2" stroke-width="1"/>`;
+    const[lx,ly]=toXY(angles[0],v);
+    svg+=`<text x="${(lx-2).toFixed(1)}" y="${(ly-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#ccc" font-family="sans-serif">${v}</text>`;
+  });
+  angles.forEach(a=>{const[x,y]=toXY(a,9);svg+=`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e8e7e2" stroke-width="1"/>`;});
+  const lblDist=R+(mobile?20:24);
+  angles.forEach((a,i)=>{
+    const x=cx+lblDist*Math.cos(a),y=cy+lblDist*Math.sin(a);
+    const anchor=Math.cos(a)<-0.1?'end':Math.cos(a)>0.1?'start':'middle';
+    const dy=Math.sin(a)<-0.1?'-0.3em':Math.sin(a)>0.1?'1.1em':'0.35em';
+    svg+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dy="${dy}" font-size="${mobile?11:12}" fill="#444" font-weight="600" font-family="sans-serif">${CATS[i].short}</text>`;
+  });
+  const colors=['#2563EB','#DC2626','#D97706'];
+  const fills=['rgba(37,99,235,0.08)','rgba(220,38,38,0.08)','rgba(217,119,6,0.08)'];
+  const dashes=['','6,3','2,3'];
+  SCEN_DATA.forEach((sc,si)=>{
+    const vals=CATS.map((_,ci)=>parseFloat(catAvg(si,ci).toFixed(2)));
+    const pts=angles.map((a,i)=>toXY(a,vals[i]).map(x=>x.toFixed(1)).join(',')).join(' ');
+    const isActive=si===state.curScen;
+    svg+=`<polygon points="${pts}" fill="${fills[si]}" stroke="${colors[si]}" stroke-width="${isActive?2.5:1.5}" stroke-dasharray="${dashes[si]}"/>`;
+    angles.forEach((a,i)=>{
+      const[px,py]=toXY(a,vals[i]);
+      svg+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${isActive?5:3}" fill="${colors[si]}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+    if(isActive){
+      angles.forEach((a,i)=>{
+        const[px,py]=toXY(a,vals[i]);
+        svg+=`<text x="${px.toFixed(1)}" y="${(py-7).toFixed(1)}" text-anchor="middle" font-size="10" fill="${colors[si]}" font-weight="700" font-family="sans-serif">${vals[i].toFixed(1)}</text>`;
+      });
+    }
+  });
+  svg+=`</svg>`;
+  wrap.innerHTML=svg;
+}
+
+function renderAll(){
+  renderCatTabs();
+  const el=document.getElementById('cat-content');
+  if(state.curCat===5){el.innerHTML=renderSummary();drawRadar();}
+  else el.innerHTML=renderCat(state.curCat);
+}
+
+// ─── RESIZE ────────────────────────────────────────────────────────────────
+
+let resizeTimer=null,lastMobile=isMobile();
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    const nowMobile=isMobile();
+    if(nowMobile!==lastMobile){lastMobile=nowMobile;renderAll();}
+    else if(state.curCat===5)drawRadar();
+  },200);
+});
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+
+loadFromStorage();
+setScen(state.curScen,true);
+renderAll();
+</script>
+</body>
+</html>
