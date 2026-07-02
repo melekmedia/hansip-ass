@@ -1,6 +1,6 @@
 # Hansip — Alat Analisis Risiko Komunitas
 
-Alat penilaian risiko keamanan holistik untuk aktivis dan pembela hak asasi manusia di Indonesia. Dikembangkan bersama [MelekMedia](https://melekmedia.org) dan komunitas Hansip Bokir.
+Alat penilaian risiko keamanan holistik untuk aktivis dan pembela hak asasi manusia di Indonesia. Dikembangkan bersama komunitas Hansip Bokir yang [MelekMedia](https://melekmedia.org) terlibat di dalamnya.
 
 ## Fitur
 
