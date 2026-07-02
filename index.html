@@ -106,7 +106,7 @@ textarea{resize:vertical;min-height:56px}
 .tcard-score strong{font-size:16px;color:#1a1a1a;font-weight:700}
 
 /* Mobile seg — bigger touch targets */
-.seg-lg button{padding:8px 14px;font-size:14px;min-height:44px}
+.seg-lg button{padding:8px 10px;font-size:13px;min-height:44px}
 
 /* ─── Summary ─────────────────────────────── */
 .stable{width:100%;border-collapse:collapse;margin-bottom:20px}
@@ -278,9 +278,12 @@ const CATS = [
 ];
 
 const DEFAULTS = [
-  [[[1,3],[1,2],[1,2],[1,3],[1,3],[1,3],[2,3],[1,3],[2,3],[1,3]],[[1,2],[1,3],[2,3],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],[[3,3],[2,3],[1,3],[1,3],[2,3],[2,3],[2,3],[2,2],[1,2],[2,3]],[[1,3],[1,3],[1,3],[1,3],[2,2],[1,2],[1,3],[1,1],[1,1],[1,2]],[[1,2],[2,3],[1,2],[2,3],[1,1],[1,1],[1,1],[1,2],[1,1],[1,2]]],
-  [[[3,3],[2,2],[2,2],[3,3],[3,3],[3,3],[2,3],[2,3],[2,3],[2,3]],[[1,2],[2,3],[3,3],[3,2],[2,2],[2,2],[2,2],[3,2],[2,2],[2,2]],[[3,3],[3,3],[2,3],[3,3],[2,3],[3,3],[2,3],[1,2],[2,2],[2,3]],[[2,3],[3,3],[3,3],[3,3],[2,2],[2,2],[3,3],[1,1],[1,1],[2,2]],[[1,2],[2,3],[1,2],[3,3],[1,1],[1,1],[1,1],[2,2],[1,1],[3,2]]],
-  [[[2,3],[1,2],[1,2],[1,3],[2,3],[2,3],[2,3],[2,3],[3,3],[2,3]],[[1,2],[1,3],[2,3],[2,2],[2,2],[1,2],[1,2],[1,2],[1,2],[1,2]],[[3,3],[3,3],[1,3],[2,3],[2,3],[3,3],[3,3],[2,2],[2,2],[3,3]],[[3,3],[3,3],[2,3],[2,3],[2,2],[3,2],[2,3],[1,1],[2,1],[2,2]],[[1,2],[3,3],[2,2],[3,3],[1,1],[1,1],[2,1],[3,2],[1,1],[3,2]]]
+  // Pra Aksi (rescaled 1→1, 2→3, 3→5)
+  [[[1,5],[1,3],[1,3],[1,5],[1,5],[1,5],[3,5],[1,5],[3,5],[1,5]],[[1,3],[1,5],[3,5],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3]],[[5,5],[3,5],[1,5],[1,5],[3,5],[3,5],[3,5],[3,3],[1,3],[3,5]],[[1,5],[1,5],[1,5],[1,5],[3,3],[1,3],[1,5],[1,1],[1,1],[1,3]],[[1,3],[3,5],[1,3],[3,5],[1,1],[1,1],[1,1],[1,3],[1,1],[1,3]]],
+  // Aksi Massa
+  [[[5,5],[3,3],[3,3],[5,5],[5,5],[5,5],[3,5],[3,5],[3,5],[3,5]],[[1,3],[3,5],[5,5],[5,3],[3,3],[3,3],[3,3],[5,3],[3,3],[3,3]],[[5,5],[5,5],[3,5],[5,5],[3,5],[5,5],[3,5],[1,3],[3,3],[3,5]],[[3,5],[5,5],[5,5],[5,5],[3,3],[3,3],[5,5],[1,1],[1,1],[3,3]],[[1,3],[3,5],[1,3],[5,5],[1,1],[1,1],[1,1],[3,3],[1,1],[5,3]]],
+  // Paska-Aksi
+  [[[3,5],[1,3],[1,3],[1,5],[3,5],[3,5],[3,5],[3,5],[5,5],[3,5]],[[1,3],[1,5],[3,5],[3,3],[3,3],[1,3],[1,3],[1,3],[1,3],[1,3]],[[5,5],[5,5],[1,5],[3,5],[3,5],[5,5],[5,5],[3,3],[3,3],[5,5]],[[5,5],[5,5],[3,5],[3,5],[3,3],[5,3],[3,5],[1,1],[3,1],[3,3]],[[1,3],[5,5],[3,3],[5,5],[1,1],[1,1],[3,1],[5,3],[1,1],[5,3]]]
 ];
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
@@ -294,10 +297,10 @@ let state = {
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 
 const isMobile = () => window.innerWidth <= 640;
-function rL(p,i){if(p===3&&i===3)return'T';if(p===1||(p===2&&i===1))return'R';return'S'}
+function rL(p,i){const s=p*i;return s>=15?'T':s>=5?'S':'R'}
 function rLbl(r){return r==='T'?'TINGGI':r==='S'?'SEDANG':'RENDAH'}
 function catAvg(si,ci){return state.scores[si][ci].reduce((a,t)=>a+t.p*t.i,0)/10}
-function catLvl(avg){return avg>6?'T':avg>=4?'S':'R'}
+function catLvl(avg){return avg>=15?'T':avg>=5?'S':'R'}
 
 // ─── SAVE ──────────────────────────────────────────────────────────────────
 
@@ -429,7 +432,7 @@ function switchCat(i){state.curCat=i;renderAll()}
 function makeSeg(ci,ti,key,val,mobile){
   const cur=state.scores[state.curScen][ci][ti][key];
   const cls='seg'+(mobile?' seg-lg':'');
-  return`<div class="${cls}">${[1,2,3].map(v=>`<button class="${v===cur?'on':''}" onclick="setVal(${ci},${ti},'${key}',${v})">${v}</button>`).join('')}</div>`;
+  return`<div class="${cls}">${[1,2,3,4,5].map(v=>`<button class="${v===cur?'on':''}" onclick="setVal(${ci},${ti},'${key}',${v})">${v}</button>`).join('')}</div>`;
 }
 
 function renderCat(ci){
@@ -507,7 +510,7 @@ function renderCat(ci){
     </table>
   </div>
   <div class="threat-cards">${mobCards}</div>
-  <p style="font-size:11px;color:#bbb;margin-top:10px">Prob: 1 Tidak Mungkin · 2 Mungkin · 3 Sangat Mungkin &nbsp;|&nbsp; Dampak: 1 Rendah · 2 Sedang · 3 Tinggi</p>`;
+  <p style="font-size:11px;color:#bbb;margin-top:10px">Prob: 1 Sangat Tidak Mungkin · 2 Tidak Mungkin · 3 Mungkin · 4 Sangat Mungkin · 5 Hampir Pasti &nbsp;|&nbsp; Dampak: 1 Tidak Signifikan · 2 Minor · 3 Sedang · 4 Mayor · 5 Kritis &nbsp;|&nbsp; Skor TINGGI ≥15</p>`;
 }
 
 function renderSummary(){
@@ -538,11 +541,11 @@ function drawRadar(){
   const mobile=window.innerWidth<640;
   const W=mobile?320:480,H=mobile?280:380;
   const cx=W/2,cy=H/2-(mobile?5:10),R=mobile?90:130;
-  const maxVal=9,n=5;
+  const maxVal=25,n=5;
   const angles=Array.from({length:n},(_,i)=>-Math.PI/2+(2*Math.PI*i)/n);
   function toXY(a,v){const r=(v/maxVal)*R;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
   let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto">`;
-  [3,6,9].forEach(v=>{
+  [5,15,25].forEach(v=>{
     const pts=angles.map(a=>toXY(a,v).map(x=>x.toFixed(1)).join(',')).join(' ');
     svg+=`<polygon points="${pts}" fill="none" stroke="#e8e7e2" stroke-width="1"/>`;
     const[lx,ly]=toXY(angles[0],v);
