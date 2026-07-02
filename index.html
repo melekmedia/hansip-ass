@@ -49,7 +49,7 @@ textarea{resize:vertical;min-height:56px}
 .stab:not(:last-child){border-right:1px solid #d4d3cd}
 .stab[data-s="0"].active{background:#2563EB;color:#fff}
 .stab[data-s="1"].active{background:#DC2626;color:#fff}
-.stab[data-s="2"].active{background:#D97706;color:#fff}
+.stab[data-s="2"].active{background:#7C3AED;color:#fff}
 .scen-bar{margin-top:10px;padding:10px 12px;border-radius:6px;background:#f9f8f5;border-left:3px solid #ccc;font-size:13px;line-height:1.65;color:#333}
 
 /* ─── Category tabs ───────────────────────── */
@@ -115,6 +115,10 @@ textarea{resize:vertical;min-height:56px}
 .stable tr:last-child td{border-bottom:none}
 .stable td:nth-child(n+2){text-align:center}
 .radar-wrap{display:flex;justify-content:center;padding:8px 0}
+.radar-row{display:flex;gap:12px;margin-top:8px}
+.radar-col{flex:1;min-width:0;text-align:center}
+.radar-col-title{font-size:12px;font-weight:600;margin-bottom:4px}
+@media(max-width:640px){.radar-row{flex-direction:column}}
 
 /* ─── Footer ──────────────────────────────── */
 footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e7e2;padding:10px 16px;z-index:99}
@@ -259,7 +263,7 @@ const SCEN_DATA = [
   { label:"Aksi Massa", color:"#DC2626",
     desc:"Perizinan, panggilan publik, titik kumpul, mobilisasi jaringan, peta evakuasi.",
     context:"Risiko <b>tertinggi secara keseluruhan</b>. Kekerasan fisik dan jerat hukum sangat mungkin terjadi. <b>K3 meningkat tajam</b> akibat kerumunan dan potensi gas/proyektil." },
-  { label:"Paska-Aksi", color:"#D97706",
+  { label:"Paska-Aksi", color:"#7C3AED",
     desc:"Rapat lanjutan, kampanye digital, peliputan investigasi, pernyataan sikap bersama.",
     context:"Risiko fisik menurun, tapi <b>hukum & digital meningkat</b> — penyelidikan dan doxxing sering menyusul aksi. Risiko <b>psikis mencapai puncaknya</b> (trauma, PTSD, depresi)." }
 ];
@@ -526,57 +530,57 @@ function renderSummary(){
     <thead><tr><th>Aspek Penilaian</th>${heads}</tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <div style="font-size:12px;color:#999;margin-bottom:6px">Profil risiko per skenario (★ = skenario aktif):</div>
-  <div class="radar-wrap" id="radar-wrap"></div>
-  <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap">
+  <div style="font-size:12px;color:#999;margin-bottom:8px">Profil risiko per skenario (★ = aktif):</div>
+  <div id="radar-wrap"></div>
+  <div style="display:flex;justify-content:center;gap:20px;margin-top:8px;flex-wrap:wrap">
     ${SCEN_DATA.map((s,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555">
-      <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${s.color}" stroke-width="2.5" stroke-dasharray="${i===0?'':i===1?'6,3':'2,3'}"/><circle cx="11" cy="4" r="3" fill="${s.color}"/></svg>
-      ${s.label}
+      <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="${s.color}" stroke-width="${i===state.curScen?2.5:1.5}" stroke-dasharray="${i===0?'':i===1?'6,3':'2,3'}"/><circle cx="10" cy="4" r="${i===state.curScen?4:2.5}" fill="${i===state.curScen?s.color:'#ccc'}"/></svg>
+      ${s.label}${i===state.curScen?' ★':''}
     </div>`).join('')}
   </div>`;
 }
 
 function drawRadar(){
   const wrap=document.getElementById('radar-wrap');if(!wrap)return;
-  const mobile=window.innerWidth<640;
-  const W=mobile?320:480,H=mobile?280:380;
-  const cx=W/2,cy=H/2-(mobile?5:10),R=mobile?90:130;
-  const maxVal=25,n=5;
+  const VW=500,VH=420,cx=VW/2,cy=VH/2-10,R=148,maxVal=25,n=5;
+  const colors=['#2563EB','#DC2626','#7C3AED'];
+  const fills=['rgba(37,99,235,0.1)','rgba(220,38,38,0.1)','rgba(124,58,237,0.1)'];
   const angles=Array.from({length:n},(_,i)=>-Math.PI/2+(2*Math.PI*i)/n);
   function toXY(a,v){const r=(v/maxVal)*R;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
-  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto">`;
+  let svg=`<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">`;
+  // Grid rings
   [5,15,25].forEach(v=>{
     const pts=angles.map(a=>toXY(a,v).map(x=>x.toFixed(1)).join(',')).join(' ');
     svg+=`<polygon points="${pts}" fill="none" stroke="#e8e7e2" stroke-width="1"/>`;
     const[lx,ly]=toXY(angles[0],v);
-    svg+=`<text x="${(lx-2).toFixed(1)}" y="${(ly-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#ccc" font-family="sans-serif">${v}</text>`;
+    svg+=`<text x="${lx.toFixed(1)}" y="${(ly-4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#ccc" font-family="sans-serif">${v}</text>`;
   });
-  angles.forEach(a=>{const[x,y]=toXY(a,9);svg+=`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e8e7e2" stroke-width="1"/>`;});
-  const lblDist=R+(mobile?20:24);
+  // Axes
+  angles.forEach(a=>{const[x,y]=toXY(a,25);svg+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e8e7e2" stroke-width="1"/>`;});
+  // Labels
   angles.forEach((a,i)=>{
-    const x=cx+lblDist*Math.cos(a),y=cy+lblDist*Math.sin(a);
+    const d=R+28,x=cx+d*Math.cos(a),y=cy+d*Math.sin(a);
     const anchor=Math.cos(a)<-0.1?'end':Math.cos(a)>0.1?'start':'middle';
     const dy=Math.sin(a)<-0.1?'-0.3em':Math.sin(a)>0.1?'1.1em':'0.35em';
-    svg+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dy="${dy}" font-size="${mobile?11:12}" fill="#444" font-weight="600" font-family="sans-serif">${CATS[i].short}</text>`;
+    svg+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dy="${dy}" font-size="13" fill="#444" font-weight="600" font-family="sans-serif">${CATS[i].short}</text>`;
   });
-  const colors=['#2563EB','#DC2626','#D97706'];
-  const fills=['rgba(37,99,235,0.08)','rgba(220,38,38,0.08)','rgba(217,119,6,0.08)'];
-  const dashes=['','6,3','2,3'];
-  SCEN_DATA.forEach((sc,si)=>{
+  // Inactive scenarios (gray, behind)
+  SCEN_DATA.forEach((_,si)=>{
+    if(si===state.curScen)return;
     const vals=CATS.map((_,ci)=>parseFloat(catAvg(si,ci).toFixed(2)));
     const pts=angles.map((a,i)=>toXY(a,vals[i]).map(x=>x.toFixed(1)).join(',')).join(' ');
-    const isActive=si===state.curScen;
-    svg+=`<polygon points="${pts}" fill="${fills[si]}" stroke="${colors[si]}" stroke-width="${isActive?2.5:1.5}" stroke-dasharray="${dashes[si]}"/>`;
-    angles.forEach((a,i)=>{
-      const[px,py]=toXY(a,vals[i]);
-      svg+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${isActive?5:3}" fill="${colors[si]}" stroke="#fff" stroke-width="1.5"/>`;
-    });
-    if(isActive){
-      angles.forEach((a,i)=>{
-        const[px,py]=toXY(a,vals[i]);
-        svg+=`<text x="${px.toFixed(1)}" y="${(py-7).toFixed(1)}" text-anchor="middle" font-size="10" fill="${colors[si]}" font-weight="700" font-family="sans-serif">${vals[i].toFixed(1)}</text>`;
-      });
-    }
+    svg+=`<polygon points="${pts}" fill="rgba(0,0,0,0.02)" stroke="#d0d0d0" stroke-width="1" stroke-dasharray="4,3"/>`;
+    angles.forEach((a,i)=>{const[px,py]=toXY(a,vals[i]);svg+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3" fill="#d0d0d0"/>`;});
+  });
+  // Active scenario (colored, front)
+  const si=state.curScen,col=colors[si],fl=fills[si];
+  const vals=CATS.map((_,ci)=>parseFloat(catAvg(si,ci).toFixed(2)));
+  const pts=angles.map((a,i)=>toXY(a,vals[i]).map(x=>x.toFixed(1)).join(',')).join(' ');
+  svg+=`<polygon points="${pts}" fill="${fl}" stroke="${col}" stroke-width="2.5"/>`;
+  angles.forEach((a,i)=>{
+    const[px,py]=toXY(a,vals[i]);
+    svg+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5" fill="${col}" stroke="#fff" stroke-width="2"/>`;
+    svg+=`<text x="${px.toFixed(1)}" y="${(py-9).toFixed(1)}" text-anchor="middle" font-size="11" fill="${col}" font-weight="700" font-family="sans-serif">${vals[i].toFixed(1)}</text>`;
   });
   svg+=`</svg>`;
   wrap.innerHTML=svg;
@@ -585,7 +589,7 @@ function drawRadar(){
 function renderAll(){
   renderCatTabs();
   const el=document.getElementById('cat-content');
-  if(state.curCat===5){el.innerHTML=renderSummary();drawRadar();}
+  if(state.curCat===5){el.innerHTML=renderSummary();setTimeout(drawRadar,50);}
   else el.innerHTML=renderCat(state.curCat);
 }
 
