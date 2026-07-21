@@ -14,7 +14,8 @@ Alat penilaian risiko keamanan holistik untuk aktivis dan pembela hak asasi manu
 
 ## Cara Pakai
 
-Buka langsung di browser: **[https://melekmedia.github.io/hansip-ass/](https://melekmedia.github.io/hansip-ass/)**
+Buka langsung di browser: **[https://melekmedia.github.io/hansip-ass/](https://melekmedia.github.io/hansip-ass/)** 
+Untuk v2 ada di link ini : **[https://melekmedia.github.io/hansip-ass/v2/](https://melekmedia.github.io/hansip-ass/v2)** 
 
 Atau unduh `index.html` dan buka sebagai file lokal.
 
