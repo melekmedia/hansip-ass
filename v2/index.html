@@ -43,6 +43,11 @@ input[type=text],input[type=date],textarea{padding:8px 10px;border:1px solid #d4
 input[type=text]:focus,input[type=date]:focus,textarea:focus{border-color:#888}
 textarea{resize:vertical;min-height:56px}
 
+/* ─── Org category pills ──────────────────── */
+.org-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;cursor:pointer;border:1px solid #d4d3cd;border-radius:16px;background:#fff;color:#666;transition:background .1s;user-select:none}
+.org-pill.on{background:#1c1c1c;color:#fff;border-color:#1c1c1c}
+.org-pill input{display:none}
+
 /* ─── Category tabs ───────────────────────── */
 .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .ctab{padding:6px 11px;font-size:12px;cursor:pointer;border:1px solid #d4d3cd;border-radius:6px;background:#fff;color:#666;font-family:inherit;display:flex;align-items:center;gap:5px;transition:background .1s;white-space:nowrap;min-height:36px}
@@ -197,6 +202,11 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px sol
       <div class="fg"><label>Tanggal Penilaian</label><input type="date" id="f-tgl" oninput="saveMeta()"></div>
       <div class="fg"><label>Kontak / Email</label><input type="text" id="f-kontak" placeholder="kontak@email.com" oninput="saveMeta()"></div>
       <div class="fg form-full"><label>Catatan Konteks</label><textarea id="f-catatan" placeholder="Deskripsi singkat konteks kegiatan, wilayah, atau kondisi khusus yang relevan..." oninput="saveMeta()"></textarea></div>
+      <div class="fg form-full">
+        <label>Kategori Organisasi</label>
+        <div id="org-cat-group" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px"></div>
+        <div style="font-size:11px;color:#999;margin-top:4px">Pilih satu atau lebih. Kosongkan untuk menghitung semua item.</div>
+      </div>
     </div>
   </div>
 
@@ -230,7 +240,7 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px sol
 const CATS = [
   { id:"kf", label:"Kekerasan Fisik", short:"Fisik",
     threats:["Penangkapan Paksa","Penyanderaan/Penyekapan","Percobaan Penculikan","Percobaan Pembunuhan","Penganiayaan/Pengeroyokan","Pengepungan Berkelompok/OTK","Penguntitan dan Penyerangan OTK","Pemerasan","Pembubaran Paksa","Penyitaan atau Pengerusakan Aset"] },
-  { id:"k3", label:"Keselamatan Fisik", short:"Kes.Fisik",
+  { id:"k3", label:"Keselamatan Fisik", short:"Keselamatan",
     threats:["Kecelakaan berkendara, tabrakan, atau lainnya","Terpapar gas, uap, debu beracun, cairan korosif, seperti Gas Air Mata","Paparan bakteri, virus, atau jamur yang dapat menyebabkan penyakit menular, contoh Water Cannon","Cedera otot, nyeri punggung, pinggang, pergelangan kaki dan tangan","Diraba, dipeluk, ke daerah intim, atau didorong secara paksa (kontak seksual tanpa consent)","Tertimpa benda atau reruntuhan yang dapat menyebabkan cedera serius","Hubungan pendek listrik, sengatan listrik, atau kebakaran akibat korsleting listrik","Tersandung, terpeleset, dan jatuh yang sering terjadi dan dapat menyebabkan luka-luka serius","Gangguan pendengaran, mual dan muntah, contoh Pengeras Suara Mobil Raisha","Paparan bahan kimia yang mudah terbakar atau meledak di area kegiatan"] },
   { id:"dg", label:"Keamanan Digital", short:"Digital",
     threats:["Kiriman pesan (email, SMS, WhatsApp) berisi tautan jebakan ke situs web palsu untuk mengambil informasi sensitif (username, kata sandi, PIN) dengan menyamar sebagai institusi resmi (Phishing)","Mengunduh secara tidak sengaja melalui lampiran email, aplikasi WhatsApp, situs web berbahaya, atau aplikasi palsu, contoh file APK Undangan (Malware)","Serangan server atau jaringan menggunakan lalu lintas (traffic) palsu dari ribuan perangkat terinfeksi (botnet) secara bersamaan (DDoS)","Pengambilalihan Akun Digital (email dan media sosial) (Account Takeover)","Pembatasan visibilitas konten oleh sistem secara diam-diam tanpa notifikasi, akun tetap bisa diakses namun jangkauannya anjlok (Shadow Banned)","Informasi pribadi disebar di internet tanpa izin dan tanpa sepengetahuan pemilik (Doxing)","Serangan yang meretas website dan mengubah tampilannya menjadi iklan judi online (Web Defacement)","Serangan digital yang secara masif membanjiri kolom komentar di berbagai platform media sosial (Spam Komentar Judol)","Serangan digital yang membuat nomor ponsel atau SIM korban kehilangan sinyal namun akunnya masih aktif (SIM-Swap)","Manipulasi media berbasis kecerdasan buatan (AI) yang menggabungkan atau mengganti wajah, suara, dan ekspresi seseorang sehingga tampak sangat nyata (Deep Fake)"] },
@@ -251,10 +261,33 @@ const DEFAULTS = [
 
 const ACCENT = "#2563EB";
 
+// Kategori organisasi
+const ORG_CATS = [
+  {id:"p", label:"Pendampingan"},
+  {id:"a", label:"Advokasi"},
+  {id:"k", label:"Peningkatan Kapasitas"},
+  {id:"r", label:"Penelitian"},
+  {id:"c", label:"Kampanye"}
+];
+
+// Pemetaan relevansi tiap item (index sesuai urutan threats di CATS) ke kategori organisasi
+const ORG_MAP = [
+  // Kekerasan Fisik
+  [["p","a"],["p","a"],["p","a"],["p","a"],["p","a"],["p","a"],["p","a","r","c"],["p","a","r","c"],["a"],["p","a"]],
+  // Keselamatan Fisik
+  [["p","a","k","r","c"],["a"],["a"],["p","a","k","r","c"],["p","a","k","r"],["a"],["p","a","k","r","c"],["p","a","k","r","c"],["a"],["a"]],
+  // Keamanan Digital
+  [["p","a","k","r","c"],["p","a","k","r","c"],["a","k","c"],["p","a","k","r","c"],["a","c"],["p","a","r","c"],["a","k","c"],["a","k","c"],["p","a","r","c"],["a","c"]],
+  // Jerat Hukum
+  [["a","r","c"],["a","c"],["a"],["a"],["a","r","c"],["p","a"],["a"],["p","a","k","r","c"],["p","a","k","r"],["a"]],
+  // Psikis
+  [["p","a","r"],["p","a","k","r","c"],["p","a","k","r","c"],["p","a","k","r","c"],["p","a"],["p","a"],["p","a","c"],["p","a","k","r","c"],["p","a"],["p","a","r"]]
+];
+
 // ─── STATE ─────────────────────────────────────────────────────────────────
 
 let state = {
-  meta: {nama:'',org:'',tgl:'',kontak:'',catatan:''},
+  meta: {nama:'',org:'',tgl:'',kontak:'',catatan:'',orgKategori:[]},
   curCat: 0,
   scores: DEFAULTS.map(c => c.map(([p,i]) => ({p,i})))
 };
@@ -264,7 +297,23 @@ let state = {
 const isMobile = () => window.innerWidth <= 640;
 function rL(p,i){const s=p*i;return s>=15?'T':s>=5?'S':'R'}
 function rLbl(r){return r==='T'?'TINGGI':r==='S'?'SEDANG':'RENDAH'}
-function catAvg(ci){return state.scores[ci].reduce((a,t)=>a+t.p*t.i,0)/10}
+
+// Item dianggap relevan jika: belum ada kategori organisasi dipilih (tampilkan semua),
+// atau item beririsan dengan minimal satu kategori yang dipilih.
+function isItemActive(ci,ti){
+  const sel=state.meta.orgKategori;
+  if(!sel || sel.length===0) return true;
+  return ORG_MAP[ci][ti].some(id=>sel.includes(id));
+}
+function activeIndices(ci){
+  const idxs=[];
+  for(let ti=0;ti<10;ti++) if(isItemActive(ci,ti)) idxs.push(ti);
+  return idxs.length? idxs : Array.from({length:10},(_,i)=>i); // fallback: hindari bagi nol jika tidak ada yang cocok
+}
+function catAvg(ci){
+  const idxs=activeIndices(ci);
+  return idxs.reduce((a,ti)=>a+state.scores[ci][ti].p*state.scores[ci][ti].i,0)/idxs.length;
+}
 function catLvl(avg){return avg>=15?'T':avg>=5?'S':'R'}
 
 // ─── SAVE ──────────────────────────────────────────────────────────────────
@@ -298,13 +347,14 @@ function isValidScores(s){
 function loadFromStorage(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw)return;
-    const saved=JSON.parse(raw);
-    if(saved.scores && isValidScores(saved.scores))state.scores=saved.scores;
-    if(saved.meta)state.meta=saved.meta;
-    state.curCat=0;
-    applyMeta();
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(saved.scores && isValidScores(saved.scores))state.scores=saved.scores;
+      if(saved.meta)state.meta=saved.meta;
+      state.curCat=0;
+    }
   }catch(e){}
+  applyMeta();
 }
 
 function applyMeta(){
@@ -313,6 +363,25 @@ function applyMeta(){
   document.getElementById('f-tgl').value=state.meta.tgl||'';
   document.getElementById('f-kontak').value=state.meta.kontak||'';
   document.getElementById('f-catatan').value=state.meta.catatan||'';
+  if(!state.meta.orgKategori)state.meta.orgKategori=[];
+  renderOrgPills();
+}
+
+function renderOrgPills(){
+  const sel=state.meta.orgKategori;
+  document.getElementById('org-cat-group').innerHTML=ORG_CATS.map(o=>
+    `<label class="org-pill${sel.includes(o.id)?' on':''}">
+      <input type="checkbox" ${sel.includes(o.id)?'checked':''} onchange="toggleOrgCat('${o.id}')">${o.label}
+    </label>`
+  ).join('');
+}
+
+function toggleOrgCat(id){
+  const sel=state.meta.orgKategori;
+  const i=sel.indexOf(id);
+  if(i===-1)sel.push(id);else sel.splice(i,1);
+  renderOrgPills();
+  scheduleSave();renderAll();
 }
 
 function saveMeta(){
@@ -392,10 +461,14 @@ function makeSeg(ci,ti,key,val,mobile){
 }
 
 function renderCat(ci){
+  const idxs=activeIndices(ci);
   const avg=catAvg(ci);
-  const avgP=(state.scores[ci].reduce((a,t)=>a+t.p,0)/10).toFixed(1);
-  const avgI=(state.scores[ci].reduce((a,t)=>a+t.i,0)/10).toFixed(1);
+  const avgP=(idxs.reduce((a,ti)=>a+state.scores[ci][ti].p,0)/idxs.length).toFixed(1);
+  const avgI=(idxs.reduce((a,ti)=>a+state.scores[ci][ti].i,0)/idxs.length).toFixed(1);
   const catRl=catLvl(avg);
+  const filterNote = idxs.length<10
+    ? `<div style="font-size:11px;color:#999;margin-top:6px">Rata-rata dihitung dari ${idxs.length} dari 10 item, sesuai kategori organisasi yang dipilih.</div>`
+    : '';
 
   // Desktop table rows
   const deskRows=CATS[ci].threats.map((tn,ti)=>{
@@ -446,6 +519,7 @@ function renderCat(ci){
       </div>
       <button class="btn btn-reset" onclick="resetCat(${ci})">Reset kategori</button>
     </div>
+    ${filterNote}
   </div>
   <div class="threat-table-wrap" style="overflow-x:auto">
     <table class="ttable">
